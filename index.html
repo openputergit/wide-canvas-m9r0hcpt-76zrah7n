@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paw Patrol - Animal Rescue</title>
+    <script src="https://unpkg.com/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        .siren {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        #imagePreview {
+            max-height: 300px;
+            object-fit: contain;
+        }
+        .alert-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        /* Mobile responsive improvements */
+        @media (max-width: 768px) {
+            .alert-badge {
+                top: 70px;
+                right: 10px;
+                left: 10px;
+                width: calc(100% - 20px);
+            }
+            
+            #imagePreview {
+                max-height: 200px;
+            }
+        }
+        
+        /* Improved styling */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .btn-pulse {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        
+        .loading div {
+            position: absolute;
+            border: 4px solid #FF6B6B;
+            opacity: 1;
+            border-radius: 50%;
+            animation: loading 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        }
+        
+        .loading div:nth-child(2) {
+            animation-delay: -0.5s;
+        }
+        
+        @keyframes loading {
+            0% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                top: 0px;
+                left: 0px;
+                width: 72px;
+                height: 72px;
+                opacity: 0;
+            }
+        }
+        
+        /* Tracking animation */
+        .paw-marker {
+            animation: bounce 1s infinite alternate;
+        }
+        
+        @keyframes bounce {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        /* Tracking panel style */
+        .tracking-panel {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .tracking-timeline .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .tracking-timeline .line {
+            width: 2px;
+            background-color: #e0e0e0;
+        }
+        
+        .tracking-timeline .active .dot {
+            background-color: #FF6B6B;
+        }
+        
+        .tracking-timeline .active .line {
+            background-color: #FF6B6B;
+        }
+        
+        .tracking-timeline .pending .dot {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-rose-600 text-white p-4 sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" onclick="showPage('home')" class="text-2xl font-bold flex items-center">
+                <i class="bi bi-shield-fill-check mr-2"></i>Paw Patrol
+            </a>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" onclick="showPage('home')" class="hover:text-rose-200 transition duration-300 py-2">Home</a>
+                <a href="#" onclick="showPage('ngo-register')" class="hover:text-rose-200 transition duration-300 py-2">NGO Register</a>
+                <a href="#" onclick="showPage('dashboard')" class="hover:text-rose-200 transition duration-300 py-2">NGO Dashboard</a>
+                <a href="#" onclick="showPage('about')" class="hover:text-rose-200 transition duration-300 py-2">About Us</a>
+                <a href="#" onclick="showPage('contact')" class="hover:text-rose-200 transition duration-300 py-2">Contact</a>
+            </div>
+            <button class="md:hidden focus:outline-none" onclick="toggleMenu()">
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden bg-rose-600 text-white p-4 z-50 shadow-lg">
+        <a href="#" onclick="showPage('home')" class="block py-3 border-b border-rose-500 hover:bg-rose-700 px-2 rounded transition">Home</a>
+        <a href="#" onclick="showPage('ngo-register')" class="block py-3 border-b border-rose-500 hover:bg-rose-700 px-2 rounded transition">NGO Register</a>
+        <a href="#" onclick="showPage('dashboard')" class="block py-3 border-b border-rose-500 hover:bg-rose-700 px-2 rounded transition">NGO Dashboard</a>
+        <a href="#" onclick="showPage('about')" class="block py-3 border-b border-rose-500 hover:bg-rose-700 px-2 rounded transition">About Us</a>
+        <a href="#" onclick="showPage('contact')" class="block py-3 hover:bg-rose-700 px-2 rounded transition">Contact</a>
+    </div>
+
+    <!-- Alert Badge for Siren -->
+    <div id="alertBadge" class="alert-badge hidden">
+        <div class="bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center siren justify-between">
+            <div class="flex items-center">
+                <i class="bi bi-exclamation-triangle-fill mr-2 text-xl"></i>
+                <span>Emergency Alert: Injured Animal Reported</span>
+            </div>
+            <button id="acceptRequestBtn" onclick="acceptEmergencyRequest()" class="bg-white text-red-600 px-3 py-1 rounded-md font-medium text-sm hover:bg-gray-100 transition ml-3">
+                Accept Request
+            </button>
+        </div>
+    </div>
+
+    <!-- Home Section -->
+    <section id="home" class="page active container mx-auto p-4 mt-4 md:mt-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="p-6 md:p-8 bg-rose-50 border-b border-rose-100">
+                <h2 class="text-3xl font-bold mb-2 text-rose-800">Report Injured Animal</h2>
+                <p class="text-gray-600">Help an animal in need by reporting its condition and location</p>
+            </div>
+            <div class="p-6 md:p-8 space-y-6">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-rose-400 transition duration-300" id="dropZone">
+                    <i class="bi bi-cloud-upload text-5xl text-gray-400"></i>
+                    <p class="mt-3 text-gray-600">Drag and drop image or click to upload</p>
+                    <p class="text-sm text-gray-500 mt-2">Maximum file size: 10MB</p>
+                    <input type="file" id="fileInput" class="hidden" accept="image/*">
+                </div>
+                
+                <!-- AI Analysis Loading -->
+                <div id="aiAnalysisLoading" class="hidden flex flex-col items-center justify-center p-4">
+                    <div class="loading"><div></div><div></div></div>
+                    <p class="mt-4 text-gray-600">Analyzing image with AI...</p>
+                </div>
+                
+                <!-- Image Preview -->
+                <div id="previewContainer" class="hidden bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-3 text-rose-700"><i class="bi bi-image mr-2"></i>Image Preview:</h3>
+                    <div class="flex justify-center">
+                        <img id="imagePreview" class="rounded-lg shadow-md border border-gray-200" alt="Preview">
+                    </div>
+                </div>
+                
+                <!-- Loading Animation -->
+                <div id="loadingLocation" class="hidden flex flex-col items-center justify-center py-4">
+                    <div class="loading"><div></div><div></div></div>
+                    <p class="mt-4 text-gray-600">Getting your location...</p>
+                </div>
+                
+                <!-- Location Display -->
+                <div id="locationDisplay" class="hidden bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-3 text-rose-700"><i class="bi bi-geo-alt-fill mr-2"></i>Your Location:</h3>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p id="locationText" class="text-gray-700 mb-3">Getting your location...</p>
+                        <div id="locationMap" class="h-48 md:h-64 bg-gray-200 rounded-lg overflow-hidden"></div>
+                    </div>
+                </div>
+                
+                <div id="userForm" class="hidden space-y-4 bg-gray-50 p-6 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2 text-rose-700"><i class="bi bi-person-fill mr-2"></i>Your Information:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="userName" class="block text-gray-700 font-medium">Your Name</label>
+                            <input type="text" id="userName" placeholder="Enter your name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-rose-200 focus:border-rose-500 outline-none">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="userPhone" class="block text-gray-700 font-medium">Phone Number</label>
+                            <input type="tel" id="userPhone" placeholder="Enter your phone number" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-rose-200 focus:border-rose-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <button onclick="submitReport()" class="w-full bg-rose-600 text-white py-3 rounded-lg hover:bg-rose-700 transition duration-300 font-medium text-lg btn-pulse">
+                            <i class="bi bi-send-fill mr-2"></i>Submit Emergency Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Emergency Process Explanation -->
+        <div class="max-w-4xl mx-auto mt-8 bg-white rounded-lg shadow-lg p-6 md:p-8">
+            <h3 class="text-2xl font-bold text-rose-800 mb-6">How the Emergency Process Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-rose-50 p-5 rounded-lg card-hover">
+                    <div class="bg-rose-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                        <i class="bi bi-camera text-rose-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">1. Upload Photo</h4>
+                    <p class="text-gray-600">Take a clear photo of the injured animal and upload it to our platform</p>
+                </div>
+                <div class="bg-rose-50 p-5 rounded-lg card-hover">
+                    <div class="bg-rose-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                        <i class="bi bi-robot text-rose-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">2. AI Verification</h4>
+                    <p class="text-gray-600">Our AI verifies the image contains an animal in need of assistance</p>
+                </div>
+                <div class="bg-rose-50 p-5 rounded-lg card-hover">
+                    <div class="bg-rose-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                        <i class="bi bi-geo-alt text-rose-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">3. Location Detection</h4>
+                    <p class="text-gray-600">Our system automatically detects your location to find nearby NGOs</p>
+                </div>
+                <div class="bg-rose-50 p-5 rounded-lg card-hover">
+                    <div class="bg-rose-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                        <i class="bi bi-megaphone text-rose-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">4. Immediate Alert</h4>
+                    <p class="text-gray-600">Emergency alerts with real-time tracking sent to nearby NGOs</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NGO Register Section -->
+    <section id="ngo-register" class="page container mx-auto p-4 mt-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="p-6 md:p-8 bg-amber-50 border-b border-amber-100">
+                <h2 class="text-3xl font-bold mb-2 text-amber-800">NGO Registration</h2>
+                <p class="text-gray-600">Join our network to help rescue injured animals in your area</p>
+            </div>
+            <div class="p-6 md:p-8">
+                <form id="ngoRegistrationForm" class="space-y-6">
+                    <div class="bg-amber-50 p-4 rounded-lg mb-6">
+                        <h3 class="font-semibold text-amber-800 mb-2"><i class="bi bi-info-circle-fill mr-2"></i>Why Register?</h3>
+                        <p class="text-gray-700">By registering your NGO, you'll receive real-time alerts about injured animals in your area, allowing for quicker response times and better outcomes for animals in need.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="ngoName" class="block text-gray-700 font-medium">NGO Name</label>
+                            <input type="text" id="ngoName" placeholder="Enter NGO name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="ngoEmail" class="block text-gray-700 font-medium">Email Address</label>
+                            <input type="email" id="ngoEmail" placeholder="Enter email address" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="ngoPassword" class="block text-gray-700 font-medium">Password</label>
+                            <input type="password" id="ngoPassword" placeholder="Create a password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="ngoPhone" class="block text-gray-700 font-medium">Contact Number</label>
+                            <input type="tel" id="ngoPhone" placeholder="Enter contact number" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label for="ngoAddress" class="block text-gray-700 font-medium">Address</label>
+                        <textarea id="ngoAddress" placeholder="Enter full address" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="ngoCity" class="block text-gray-700 font-medium">City</label>
+                            <input type="text" id="ngoCity" placeholder="Enter city" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="ngoState" class="block text-gray-700 font-medium">State</label>
+                            <input type="text" id="ngoState" placeholder="Enter state" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="ngoZip" class="block text-gray-700 font-medium">ZIP Code</label>
+                            <input type="text" id="ngoZip" placeholder="Enter ZIP code" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="ngoCountry" class="block text-gray-700 font-medium">Country</label>
+                            <input type="text" id="ngoCountry" placeholder="Enter country" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-amber-200 focus:border-amber-500 outline-none" required>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="button" onclick="registerNGO()" class="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition duration-300 font-medium text-lg">
+                            <i class="bi bi-shield-check mr-2"></i>Register NGO
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- NGO Dashboard Section -->
+    <section id="dashboard" class="page container mx-auto p-4 mt-8 mb-16">
+        <div class="max-w-6xl mx-auto">
+            <!-- Login Section -->
+            <div id="loginPrompt" class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="p-6 md:p-8 bg-teal-50 border-b border-teal-100">
+                    <h2 class="text-3xl font-bold mb-2 text-teal-800">NGO Dashboard Login</h2>
+                    <p class="text-gray-600">Access your dashboard to view and manage animal rescue cases</p>
+                </div>
+                <div class="p-6 md:p-8 space-y-6">
+                    <div class="max-w-lg mx-auto">
+                        <div class="bg-teal-50 p-4 rounded-lg mb-6">
+                            <div class="flex">
+                                <div class="mr-3 text-teal-600">
+                                    <i class="bi bi-shield-lock-fill text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-teal-800 mb-1">Secure NGO Portal</h3>
+                                    <p class="text-gray-600">Enter your credentials to access the dashboard</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label for="loginEmail" class="block text-gray-700 font-medium">Email Address</label>
+                                <input type="email" id="loginEmail" placeholder="Enter your registered email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-teal-200 focus:border-teal-500 outline-none">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="loginPassword" class="block text-gray-700 font-medium">Password</label>
+                                <input type="password" id="loginPassword" placeholder="Enter your password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-teal-200 focus:border-teal-500 outline-none">
+                            </div>
+                            <div class="pt-2">
+                                <button onclick="loginNGO()" class="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition duration-300 font-medium">
+                                    <i class="bi bi-box-arrow-in-right mr-2"></i>Login to Dashboard
+                                </button>
+                            </div>
+                            <p class="text-center text-gray-600 mt-4">
+                                Don't have an account? <a href="#" onclick="showPage('ngo-register')" class="text-teal-600 hover:underline">Register your NGO</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                
+            <!-- Dashboard Content (hidden by default) -->
+            <div id="dashboardContent" class="hidden space-y-6">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="p-6 md:p-8 bg-teal-50 border-b border-teal-100 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-3xl font-bold mb-2 text-teal-800">NGO Dashboard</h2>
+                            <p class="text-gray-600">Manage animal rescue operations and view reports</p>
+                        </div>
+                        <button onclick="logoutNGO()" class="bg-white text-teal-600 border border-teal-600 px-4 py-2 rounded-lg hover:bg-teal-600 hover:text-white transition duration-300">
+                            <i class="bi bi-box-arrow-right mr-1"></i> Logout
+                        </button>
+                    </div>
+                    
+                    <div class="p-6 md:p-8">
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-blue-100 p-6 rounded-lg shadow-sm card-hover">
+                                <div class="flex items-center">
+                                    <div class="bg-blue-200 p-3 rounded-full mr-4">
+                                        <i class="bi bi-card-list text-blue-800 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-blue-800">Total Cases</h3>
+                                        <p class="text-3xl font-bold text-blue-900">24</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-green-100 p-6 rounded-lg shadow-sm card-hover">
+                                <div class="flex items-center">
+                                    <div class="bg-green-200 p-3 rounded-full mr-4">
+                                        <i class="bi bi-check-circle text-green-800 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-green-800">Rescued Animals</h3>
+                                        <p class="text-3xl font-bold text-green-900">18</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-orange-100 p-6 rounded-lg shadow-sm card-hover">
+                                <div class="flex items-center">
+                                    <div class="bg-orange-200 p-3 rounded-full mr-4">
+                                        <i class="bi bi-hourglass-split text-orange-800 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-orange-800">Pending Rescues</h3>
+                                        <p class="text-3xl font-bold text-orange-900">6</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-rose-100 p-6 rounded-lg shadow-sm card-hover">
+                                <div class="flex items-center">
+                                    <div class="bg-rose-200 p-3 rounded-full mr-4">
+                                        <i class="bi bi-lightning-charge text-rose-800 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-rose-800">Response Time</h3>
+                                        <p class="text-3xl font-bold text-rose-900">12<span class="text-base">min</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- NGO Information -->
+                        <div class="bg-gray-50 p-6 rounded-lg shadow-sm mb-8">
+                            <h3 class="text-xl font-semibold mb-4"><i class="bi bi-building mr-2 text-teal-600"></i>NGO Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p class="text-sm text-gray-600">NGO Name</p>
+                                    <p id="dashboardNgoName" class="font-semibold text-gray-900">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Email</p>
+                                    <p id="dashboardNgoEmail" class="font-semibold text-gray-900">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Phone</p>
+                                    <p id="dashboardNgoPhone" class="font-semibold text-gray-900">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Address</p>
+                                    <p id="dashboardNgoAddress" class="font-semibold text-gray-900">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Reports -->
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4"><i class="bi bi-list-ul mr-2 text-teal-600"></i>Recent Reports</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full bg-white">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th class="py-3 px-4 text-left text-gray-700">Date</th>
+                                                <th class="py-3 px-4 text-left text-gray-700">Reporter</th>
+                                                <th class="py-3 px-4 text-left text-gray-700">Location</th>
+                                                <th class="py-3 px-4 text-left text-gray-700">Status</th>
+                                                <th class="py-3 px-4 text-left text-gray-700">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b hover:bg-gray-50">
+                                                <td class="py-3 px-4 text-gray-800">15 Jun 2023</td>
+                                                <td class="py-3 px-4 text-gray-800">Rahul Singh</td>
+                                                <td class="py-3 px-4 text-gray-800">Connaught Place, Delhi</td>
+                                                <td class="py-3 px-4">
+                                                    <span class="bg-green-100 text-green-800 px-2.5 py-1 rounded-full text-xs font-medium">Rescued</span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <button class="text-blue-600 hover:underline font-medium" onclick="viewReportDetails(1)">
+                                                        <i class="bi bi-eye mr-1"></i> View Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b hover:bg-gray-50">
+                                                <td class="py-3 px-4 text-gray-800">12 Jun 2023</td>
+                                                <td class="py-3 px-4 text-gray-800">Priya Sharma</td>
+                                                <td class="py-3 px-4 text-gray-800">Lajpat Nagar, Delhi</td>
+                                                <td class="py-3 px-4">
+                                                    <span class="bg-orange-100 text-orange-800 px-2.5 py-1 rounded-full text-xs font-medium">Pending</span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <button class="text-blue-600 hover:underline font-medium" onclick="acceptCase(2)">
+                                                        <i class="bi bi-check-circle mr-1"></i> Accept Request
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="py-3 px-4 text-gray-800">10 Jun 2023</td>
+                                                <td class="py-3 px-4 text-gray-800">Amit Patel</td>
+                                                <td class="py-3 px-4 text-gray-800">Hauz Khas, Delhi</td>
+                                                <td class="py-3 px-4">
+                                                    <span class="bg-orange-100 text-orange-800 px-2.5 py-1 rounded-full text-xs font-medium">Pending</span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <button class="text-blue-600 hover:underline font-medium" onclick="acceptCase(3)">
+                                                        <i class="bi bi-check-circle mr-1"></i> Accept Request
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="page container mx-auto p-4 mt-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                <div class="p-6 md:p-8 bg-amber-50 border-b border-amber-100">
+                    <h2 class="text-3xl font-bold mb-2 text-amber-800">About Us</h2>
+                    <p class="text-gray-600">Our mission, vision and how we help injured animals</p>
+                </div>
+                <div class="p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-8 mb-8">
+                        <div class="w-full md:w-1/3">
+                            <img src="https://images.unsplash.com/photo-1548767797-d8c844163c4c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" 
+                                 alt="Animal Rescue" class="w-full h-auto rounded-lg shadow-md">
+                        </div>
+                        <div class="w-full md:w-2/3">
+                            <h3 class="text-2xl font-bold text-amber-700 mb-4">Our Mission</h3>
+                            <p class="text-gray-700 mb-4">
+                                At Paw Patrol, we are dedicated to connecting injured animals with nearby NGOs for immediate rescue and care.
+                                Our platform enables quick response times and efficient communication between concerned citizens
+                                and animal welfare organizations.
+                            </p>
+                            <p class="text-gray-700">
+                                With our advanced AI-powered system, we aim to reduce the suffering of injured animals and provide them with the care they need as quickly as possible. Our real-time alert and tracking system ensures that NGOs are notified immediately when a case is reported in their vicinity.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50 p-6 rounded-lg mb-8">
+                        <h3 class="text-xl font-semibold text-amber-800 mb-4">Our Impact</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                            <div>
+                                <div class="text-3xl font-bold text-amber-700 mb-2">500+</div>
+                                <p class="text-gray-700">Animals Rescued</p>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-bold text-amber-700 mb-2">50+</div>
+                                <p class="text-gray-700">NGO Partners</p>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-bold text-amber-700 mb-2">20+</div>
+                                <p class="text-gray-700">Cities Covered</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-2xl font-bold text-amber-700 mb-6">How It Works</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-start bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <div class="bg-amber-100 rounded-full p-3 mr-4 flex-shrink-0">
+                                <span class="text-amber-600 font-bold text-lg">1</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">Report an Injured Animal</h4>
+                                <p class="text-gray-600">Take a photo of the injured animal and upload it through our platform. Our AI verifies it's an animal in need before proceeding.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <div class="bg-amber-100 rounded-full p-3 mr-4 flex-shrink-0">
+                                <span class="text-amber-600 font-bold text-lg">2</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">Automatic Location Detection</h4>
+                                <p class="text-gray-600">Our system automatically detects your location using GPS technology, ensuring the closest NGOs can be notified for a quicker response time.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <div class="bg-amber-100 rounded-full p-3 mr-4 flex-shrink-0">
+                                <span class="text-amber-600 font-bold text-lg">3</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">Alert Nearby NGOs</h4>
+                                <p class="text-gray-600">The system sends immediate alerts with images and location details to all registered NGOs within a certain radius of the incident.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <div class="bg-amber-100 rounded-full p-3 mr-4 flex-shrink-0">
+                                <span class="text-amber-600 font-bold text-lg">4</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-lg">Real-time Tracking</h4>
+                                <p class="text-gray-600">Once an NGO accepts the request, both the reporter and the NGO can track each other's location in real-time for efficient rescue coordination.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Section -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="p-6 md:p-8 bg-amber-50 border-b border-amber-100">
+                    <h2 class="text-2xl font-bold mb-2 text-amber-800">Our Team</h2>
+                    <p class="text-gray-600">Meet the people behind Paw Patrol</p>
+                </div>
+                <div class="p-6 md:p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center card-hover">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
+                                 alt="Team Member" class="w-32 h-32 object-cover rounded-full mx-auto mb-4">
+                            <h4 class="font-semibold text-lg">Priya Sharma</h4>
+                            <p class="text-gray-600">Founder & CEO</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center card-hover">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
+                                 alt="Team Member" class="w-32 h-32 object-cover rounded-full mx-auto mb-4">
+                            <h4 class="font-semibold text-lg">Rahul Verma</h4>
+                            <p class="text-gray-600">Operations Director</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center card-hover">
+                            <img src="https://images.unsplash.com/photo-1629425733761-caae3b5f2e50?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
+                                 alt="Team Member" class="w-32 h-32 object-cover rounded-full mx-auto mb-4">
+                            <h4 class="font-semibold text-lg">Aman Gupta</h4>
+                            <p class="text-gray-600">Technology Lead</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="page container mx-auto p-4 mt-8 mb-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="p-6 md:p-8 bg-rose-50 border-b border-rose-100">
+                    <h2 class="text-3xl font-bold mb-2 text-rose-800">Contact Us</h2>
+                    <p class="text-gray-600">Get in touch with our team for any inquiries or support</p>
+                </div>
+                <div class="p-6 md:p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover">
+                            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="bi bi-geo-alt-fill text-rose-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-lg mb-2">Our Address</h3>
+                            <p class="text-gray-700">123 Animal Welfare Road, New Delhi, India - 110001</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover">
+                            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="bi bi-envelope-fill text-rose-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-lg mb-2">Email Us</h3>
+                            <p class="text-gray-700">info@pawpatrol.org</p>
+                            <p class="text-gray-700">support@pawpatrol.org</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 text-center card-hover">
+                            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="bi bi-telephone-fill text-rose-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-lg mb-2">Call Us</h3>
+                            <p class="text-gray-700">+91 98765 43210</p>
+                            <p class="text-gray-700">24/7 Emergency Response</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <div class="bg-rose-50 p-4 rounded-lg mb-6">
+                                <h3 class="font-semibold text-rose-800 mb-2">Get in Touch</h3>
+                                <p class="text-gray-700">We value your feedback and questions. Fill out the form, and our team will get back to you as soon as possible.</p>
+                            </div>
+                            <form id="contactForm" class="space-y-4">
+                                <div class="space-y-2">
+                                    <label for="contactName" class="block text-gray-700 font-medium">Your Name</label>
+                                    <input type="text" id="contactName" placeholder="Enter your name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-rose-200 focus:border-rose-500 outline-none" required>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="contactEmail" class="block text-gray-700 font-medium">Email Address</label>
+                                    <input type="email" id="contactEmail" placeholder="Enter your email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-rose-200 focus:border-rose-500 outline-none" required>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="contactPhone" class="block text-gray-700 font-medium">Phone Number</label>
+                                    <input type="tel" id="contactPhone" placeholder="Enter your phone number" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-rose-200 focus:border-rose-500 outline-none" required>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="contactMessage" class="block text-gray-700 font-medium">Message</label>
+                                    <textarea id="contactMessage" placeholder="Enter your message" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-rose-200 focus:border-rose-500 outline-none h-32" required></textarea>
+                                </div>
+                                <div class="pt-2">
+                                    <button type="button" onclick="submitContact()" class="w-full bg-rose-600 text-white py-3 rounded-lg hover:bg-rose-700 transition duration-300 font-medium">
+                                        <i class="bi bi-send-fill mr-2"></i>Send Message
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div>
+                            <div class="bg-gray-200 rounded-lg overflow-hidden shadow-md h-full min-h-[400px]">
+                                <!-- Placeholder for Google Map -->
+                                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d224346.61367338035!2d77.0701108371566!3d28.527252736594583!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce5a43173357b%3A0x37ffce30c87cc03f!2sNew%20Delhi%2C%20Delhi!5e0!3m2!1sen!2sin!4v1624356495420!5m2!1sen!2sin" 
+                                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-rose-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="bi bi-shield-fill-check mr-2"></i>Paw Patrol
+                    </h3>
+                    <p class="text-rose-200">Connecting injured animals with rescuers, one click at a time.</p>
+                    <div class="flex space-x-4 mt-6">
+                        <a href="#" class="bg-rose-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-600 transition">
+                            <i class="bi bi-facebook text-xl"></i>
+                        </a>
+                        <a href="#" class="bg-rose-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-600 transition">
+                            <i class="bi bi-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="bg-rose-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-600 transition">
+                            <i class="bi bi-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="bg-rose-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-rose-600 transition">
+                            <i class="bi bi-youtube text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" onclick="showPage('home')" class="text-rose-200 hover:text-white transition flex items-center">
+                                <i class="bi bi-chevron-right mr-2 text-xs"></i>Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showPage('ngo-register')" class="text-rose-200 hover:text-white transition flex items-center">
+                                <i class="bi bi-chevron-right mr-2 text-xs"></i>NGO Register
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showPage('dashboard')" class="text-rose-200 hover:text-white transition flex items-center">
+                                <i class="bi bi-chevron-right mr-2 text-xs"></i>NGO Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showPage('about')" class="text-rose-200 hover:text-white transition flex items-center">
+                                <i class="bi bi-chevron-right mr-2 text-xs"></i>About Us
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" onclick="showPage('contact')" class="text-rose-200 hover:text-white transition flex items-center">
+                                <i class="bi bi-chevron-right mr-2 text-xs"></i>Contact
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Newsletter</h3>
+                    <p class="text-rose-200 mb-4">Subscribe to our newsletter for updates on animal welfare initiatives.</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Enter your email" class="bg-rose-900 text-white px-4 py-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-rose-400 w-full">
+                        <button class="bg-rose-600 px-4 py-2 rounded-r-lg hover:bg-rose-500 transition">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-rose-700 text-center text-rose-200">
+                <p>&copy; 2023 Paw Patrol. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Directional Map Modal (hidden by default) -->
+    <div id="directionsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div class="p-4 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-rose-800">Navigation to Animal Location</h3>
+                <button onclick="closeDirectionsModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div id="directionsMap" class="h-[50vh] w-full bg-gray-200 rounded-lg mb-4"></div>
+                
+                <!-- Tracking status panel -->
+                <div class="tracking-panel p-4 mb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-bold text-gray-800">Rescue Status</h4>
+                        <div class="text-sm bg-rose-100 text-rose-800 px-3 py-1 rounded-full">
+                            <i class="bi bi-clock"></i> ETA: ~12 mins
+                        </div>
+                    </div>
+                    
+                    <!-- Tracking timeline -->
+                    <div class="tracking-timeline flex flex-col space-y-4 ml-2">
+                        <div class="flex active">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="dot bg-rose-600"></div>
+                                <div class="line h-full"></div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Request Accepted</p>
+                                <p class="text-sm text-gray-600">You've accepted the rescue request</p>
+                                <p class="text-xs text-gray-500">3 minutes ago</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex active">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="dot bg-rose-600"></div>
+                                <div class="line h-full"></div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">En Route</p>
+                                <p class="text-sm text-gray-600">You are on the way to the animal location</p>
+                                <p class="text-xs text-gray-500">2 minutes ago</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex pending">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="dot"></div>
+                                <div class="line h-full"></div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-500">Arrived at Location</p>
+                                <p class="text-sm text-gray-400">Arriving at the animal's location</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex pending">
+                            <div class="flex flex-col items-center mr-4">
+                                <div class="dot"></div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-500">Animal Rescued</p>
+                                <p class="text-sm text-gray-400">Animal is secured and being transported</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="directionsPanel" class="bg-gray-50 p-4 rounded-lg max-h-[30vh] overflow-auto"></div>
+                
+                <!-- Action buttons -->
+                <div class="mt-4 flex justify-between">
+                    <button onclick="updateRescueStatus('arrived')" class="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition">
+                        <i class="bi bi-geo-alt-fill mr-2"></i>Mark as Arrived
+                    </button>
+                    <button onclick="updateRescueStatus('rescued')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                        <i class="bi bi-check-circle-fill mr-2"></i>Mark as Rescued
+                    </button>
+                    <button onclick="closeDirectionsModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                        <i class="bi bi-x-circle mr-2"></i>Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Page navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            
+            // Hide mobile menu if open
+            document.getElementById('mobileMenu').classList.add('hidden');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+        
+        // Mobile menu toggle
+        function toggleMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const loadingLocation = document.getElementById('loadingLocation');
+        const locationDisplay = document.getElementById('locationDisplay');
+        const locationText = document.getElementById('locationText');
+        const aiAnalysisLoading = document.getElementById('aiAnalysisLoading');
+        let userLocation = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-rose-500');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-rose-500');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-rose-500');
+            const files = e.dataTransfer.files;
+            handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                // Display image preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                    
+                    // Show AI analyzing loading
+                    aiAnalysisLoading.classList.remove('hidden');
+                    
+                    // Simulate AI checking if image contains an animal
+                    setTimeout(() => {
+                        // Hide AI analysis loading
+                        aiAnalysisLoading.classList.add('hidden');
+                        
+                        // Randomly decide if it contains an animal (for demo, we'll say yes 80% of the time)
+                        const isAnimal = Math.random() < 0.8;
+                        
+                        if (isAnimal) {
+                            // Show loading animation for location
+                            loadingLocation.classList.remove('hidden');
+                            
+                            // Get user location
+                            if ("geolocation" in navigator) {
+                                navigator.geolocation.getCurrentPosition((position) => {
+                                    // Hide loading animation
+                                    loadingLocation.classList.add('hidden');
+                                    
+                                    const { latitude, longitude } = position.coords;
+                                    userLocation = { latitude, longitude };
+                                    
+                                    // Show location info
+                                    locationDisplay.classList.remove('hidden');
+                                    locationText.textContent = `Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`;
+                                    
+                                    // Get address from coordinates
+                                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data && data.display_name) {
+                                                locationText.innerHTML = `<strong>Address:</strong> ${data.display_name}`;
+                                            }
+                                        })
+                                        .catch(error => console.log("Error getting address: ", error));
+                                    
+                                    // Load location map
+                                    const mapElement = document.getElementById('locationMap');
+                                    mapElement.innerHTML = `<img src="https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${latitude},${longitude}&key=YOUR_API_KEY" alt="Location Map" class="w-full h-full rounded">`;
+                                    
+                                    // Show user form
+                                    const userForm = document.getElementById('userForm');
+                                    userForm.classList.remove('hidden');
+                                }, (error) => {
+                                    // Hide loading animation
+                                    loadingLocation.classList.add('hidden');
+                                    
+                                    locationDisplay.classList.remove('hidden');
+                                    locationText.textContent = `Error getting location: ${error.message}`;
+                                    
+                                    // Still show the form for manual entry
+                                    const userForm = document.getElementById('userForm');
+                                    userForm.classList.remove('hidden');
+                                });
+                            } else {
+                                // Hide loading animation
+                                loadingLocation.classList.add('hidden');
+                                
+                                locationDisplay.classList.remove('hidden');
+                                locationText.textContent = "Geolocation is not supported by your browser.";
+                                
+                                // Still show the form for manual entry
+                                const userForm = document.getElementById('userForm');
+                                userForm.classList.remove('hidden');
+                            }
+                        } else {
+                            // Not an animal image
+                            Swal.fire({
+                                title: 'Not an Animal Image',
+                                text: 'Our AI could not detect an animal in need of help in this image. Please upload a clear photo of the injured animal.',
+                                icon: 'warning',
+                                confirmButtonColor: '#FF6B6B'
+                            });
+                            
+                            // Hide the preview
+                            previewContainer.classList.add('hidden');
+                        }
+                    }, 2000);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                Swal.fire({
+                    title: 'Invalid File',
+                    text: 'Please upload an image file',
+                    icon: 'error',
+                    confirmButtonColor: '#FF6B6B'
+                });
+            }
+        }
+
+        // Audio object for siren sound
+        let sirenAudio = null;
+
+        function playSiren() {
+            // Create new audio element for siren sound (using a reliable emergency siren sound)
+            sirenAudio = new Audio('https://www.soundjay.com/mechanical/sounds/siren-1.mp3');
+            sirenAudio.loop = true;
+            
+            // Try to play the sound with user interaction
+            const playPromise = sirenAudio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log("Siren sound started");
+                }).catch(error => {
+                    console.log("Audio playback failed:", error);
+                    // Notify user if autoplay is prevented
+                    Swal.fire({
+                        title: 'Sound Notification',
+                        text: 'Your browser blocked the emergency siren sound. Click OK to enable it.',
+                        icon: 'info',
+                        confirmButtonText: 'Enable Sound',
+                        confirmButtonColor: '#FF6B6B'
+                    }).then(() => {
+                        sirenAudio.play().catch(err => {
+                            console.log("Sound still couldn't play:", err);
+                        });
+                    });
+                });
+            }
+        }
+
+        function stopSiren() {
+            if (sirenAudio) {
+                sirenAudio.pause();
+                sirenAudio.currentTime = 0;
+                sirenAudio = null;
+            }
+        }
+
+        function submitReport() {
+            const name = document.getElementById('userName').value;
+            const phone = document.getElementById('userPhone').value;
+            
+            if (!name || !phone) {
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Please provide your name and phone number',
+                    icon: 'warning',
+                    confirmButtonColor: '#FF6B6B'
+                });
+                return;
+            }
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Submitting Report',
+                text: 'Please wait while we alert nearby NGOs...',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                Swal.fire({
+                    title: 'Report Submitted!',
+                    text: 'Nearby NGOs have been notified about the injured animal.',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#FF6B6B'
+                });
+                
+                // Show alert badge with siren and make it stay visible
+                const alertBadge = document.getElementById('alertBadge');
+                alertBadge.classList.remove('hidden');
+                
+                // Play siren sound
+                playSiren();
+                
+                // Save report details to localStorage for demo
+                const reportDetails = {
+                    name,
+                    phone,
+                    location: userLocation,
+                    timestamp: new Date().toISOString(),
+                    image: imagePreview.src,
+                    status: 'pending'
+                };
+                
+                localStorage.setItem('lastReport', JSON.stringify(reportDetails));
+            }, 2000);
+        }
+
+        // Function for NGO to accept the emergency request
+        function acceptEmergencyRequest() {
+            stopSiren();
+            
+            const alertBadge = document.getElementById('alertBadge');
+            alertBadge.classList.add('hidden');
+            
+            Swal.fire({
+                title: 'Request Accepted!',
+                text: 'You are now responsible for this rescue. Opening navigation...',
+                icon: 'success',
+                confirmButtonText: 'Navigate Now',
+                confirmButtonColor: '#FF6B6B'
+            }).then(() => {
+                // Show directions modal with map
+                showDirectionsModal();
+                
+                // Notify the user (reporter) that their request has been accepted
+                // This would typically be done via a server, but for demo we'll simulate it
+                Swal.fire({
+                    title: 'Great News!',
+                    text: 'An NGO has accepted your request and is on the way. You can now track their progress.',
+                    icon: 'success',
+                    confirmButtonText: 'Open Tracking',
+                    confirmButtonColor: '#FF6B6B',
+                    timer: 5000,
+                    timerProgressBar: true
+                });
+            });
+        }
+        
+        function showDirectionsModal() {
+            const modal = document.getElementById('directionsModal');
+            modal.classList.remove('hidden');
+            
+            // Here you would normally integrate with Google Maps Directions API
+            // For demo purposes, we'll show a static map with a paw marker
+            const directionsMap = document.getElementById('directionsMap');
+            const directionsPanel = document.getElementById('directionsPanel');
+            
+            if (userLocation) {
+                // Create an enhanced map with a paw marker
+                directionsMap.innerHTML = `
+                    <div class="relative h-full w-full">
+                        <img src="https://maps.googleapis.com/maps/api/staticmap?center=${userLocation.latitude},${userLocation.longitude}&zoom=13&size=600x400&maptype=roadmap&markers=color:red%7C${userLocation.latitude},${userLocation.longitude}&key=YOUR_API_KEY" alt="Directions Map" class="w-full h-full rounded">
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 paw-marker">
+                            <div class="bg-white p-2 rounded-full shadow-lg">
+                                <i class="bi bi-balloon-heart-fill text-3xl text-rose-600"></i>
+                            </div>
+                            <div class="text-center mt-1 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-xs">
+                                Animal Location
+                            </div>
+                        </div>
+                        <!-- NGO location (you) -->
+                        <div class="absolute bottom-1/4 right-1/4 paw-marker" style="animation-delay: 0.5s">
+                            <div class="bg-white p-2 rounded-full shadow-lg">
+                                <i class="bi bi-car-front-fill text-3xl text-teal-600"></i>
+                            </div>
+                            <div class="text-center mt-1 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-xs">
+                                You (NGO)
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                directionsPanel.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="bg-teal-100 rounded-full p-2 mr-4">
+                                <i class="bi bi-geo-alt-fill text-teal-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold">Starting Point</p>
+                                <p class="text-gray-600">Your Current Location</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="bg-rose-100 rounded-full p-2 mr-4">
+                                <i class="bi bi-balloon-heart-fill text-rose-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold">Destination</p>
+                                <p class="text-gray-600">Injured Animal Location</p>
+                            </div>
+                        </div>
+                        <div class="border-t pt-4">
+                            <p class="font-semibold mb-2">Estimated Journey:</p>
+                            <p class="text-gray-600">Distance: approximately 3.5 km</p>
+                            <p class="text-gray-600">Time: approximately 12 mins</p>
+                            <p class="text-gray-600 mt-2">Reported by: <span class="font-semibold">Rahul Singh (9876543210)</span></p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                directionsPanel.innerHTML = '<p class="text-center text-gray-600">Location data not available</p>';
+            }
+        }
+        
+        function closeDirectionsModal() {
+            const modal = document.getElementById('directionsModal');
+            modal.classList.add('hidden');
+        }
+        
+        // Update rescue status
+        function updateRescueStatus(status) {
+            const timelineItems = document.querySelectorAll('.tracking-timeline .flex');
+            
+            switch(status) {
+                case 'arrived':
+                    timelineItems[0].classList.add('active');
+                    timelineItems[1].classList.add('active');
+                    timelineItems[2].classList.add('active');
+                    timelineItems[2].classList.remove('pending');
+                    
+                    // Update the time
+                    timelineItems[2].querySelector('.text-xs').textContent = 'Just now';
+                    
+                    Swal.fire({
+                        title: 'Status Updated',
+                        text: 'You have marked yourself as arrived at the location.',
+                        icon: 'success',
+                        confirmButtonColor: '#FF6B6B'
+                    });
+                    
+                    // Update the map to show you're at the animal location
+                    const directionsMap = document.getElementById('directionsMap');
+                    const mapContent = directionsMap.innerHTML;
+                    directionsMap.innerHTML = mapContent.replace('bottom-1/4 right-1/4', 'top-1/2 left-1/2 -mt-24');
+                    
+                    break;
+                case 'rescued':
+                    timelineItems[0].classList.add('active');
+                    timelineItems[1].classList.add('active');
+                    timelineItems[2].classList.add('active');
+                    timelineItems[3].classList.add('active');
+                    timelineItems[3].classList.remove('pending');
+                    
+                    // Update the time
+                    timelineItems[3].querySelector('.text-xs').textContent = 'Just now';
+                    
+                    Swal.fire({
+                        title: 'Animal Rescued!',
+                        text: 'Thank you for rescuing this animal. The reporter has been notified.',
+                        icon: 'success',
+                        confirmButtonColor: '#FF6B6B'
+                    }).then(() => {
+                        closeDirectionsModal();
+                    });
+                    break;
+            }
+        }
+
+        // NGO Registration
+        function registerNGO() {
+            const name = document.getElementById('ngoName').value;
+            const email = document.getElementById('ngoEmail').value;
+            const password = document.getElementById('ngoPassword').value;
+            const phone = document.getElementById('ngoPhone').value;
+            const address = document.getElementById('ngoAddress').value;
+            
+            if (!name || !email || !password || !phone || !address) {
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Please fill all required fields',
+                    icon: 'warning',
+                    confirmButtonColor: '#FF6B6B'
+                });
+                return;
+            }
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Registering NGO',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // Store NGO data in localStorage for demo purposes
+                const ngoData = {
+                    name,
+                    email,
+                    phone,
+                    address,
+                    city: document.getElementById('ngoCity').value,
+                    state: document.getElementById('ngoState').value,
+                    zip: document.getElementById('ngoZip').value,
+                    country: document.getElementById('ngoCountry').value
+                };
+                
+                localStorage.setItem('ngoData', JSON.stringify(ngoData));
+                localStorage.setItem('ngoCredentials', JSON.stringify({ email, password }));
+                
+                Swal.fire({
+                    title: 'Registration Successful!',
+                    text: 'You can now access your dashboard.',
+                    icon: 'success',
+                    confirmButtonText: 'Go to Dashboard',
+                    confirmButtonColor: '#FF6B6B'
+                }).then(() => {
+                    // Reset form
+                    document.getElementById('ngoRegistrationForm').reset();
+                    
+                    // Redirect to dashboard
+                    showPage('dashboard');
+                    checkNGOLogin();
+                });
+            }, 1500);
+        }
+
+        // NGO Login
+        function loginNGO() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Please enter your email and password',
+                    icon: 'warning',
+                    confirmButtonColor: '#FF6B6B'
+                });
+                return;
+            }
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Logging in',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // Check credentials from localStorage for demo purposes
+                const storedCredentials = JSON.parse(localStorage.getItem('ngoCredentials'));
+                
+                if (storedCredentials && storedCredentials.email === email && storedCredentials.password === password) {
+                    // Login successful
+                    Swal.fire({
+                        title: 'Login Successful!',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        localStorage.setItem('ngoLoggedIn', 'true');
+                        updateDashboard();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Login Failed',
+                        text: 'Invalid email or password. Try again or register a new NGO.',
+                        icon: 'error',
+                        confirmButtonColor: '#FF6B6B'
+                    });
+                }
+            }, 1500);
+        }
+
+        // Logout NGO
+        function logoutNGO() {
+            Swal.fire({
+                title: 'Logout Confirmation',
+                text: 'Are you sure you want to logout?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Logout',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#FF6B6B'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('ngoLoggedIn');
+                    
+                    const loginPrompt = document.getElementById('loginPrompt');
+                    const dashboardContent = document.getElementById('dashboardContent');
+                    
+                    loginPrompt.classList.remove('hidden');
+                    dashboardContent.classList.add('hidden');
+                    
+                    Swal.fire({
+                        title: 'Logged Out',
+                        text: 'You have been successfully logged out.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        // Check if NGO is logged in
+        function checkNGOLogin() {
+            const isLoggedIn = localStorage.getItem('ngoLoggedIn') === 'true';
+            
+            if (isLoggedIn) {
+                updateDashboard();
+            }
+        }
+
+        // Update NGO dashboard with data
+        function updateDashboard() {
+            const loginPrompt = document.getElementById('loginPrompt');
+            const dashboardContent = document.getElementById('dashboardContent');
+            
+            loginPrompt.classList.add('hidden');
+            dashboardContent.classList.remove('hidden');
+            
+            // Get NGO data from localStorage
+            const ngoData = JSON.parse(localStorage.getItem('ngoData'));
+            
+            if (ngoData) {
+                document.getElementById('dashboardNgoName').textContent = ngoData.name;
+                document.getElementById('dashboardNgoEmail').textContent = ngoData.email;
+                document.getElementById('dashboardNgoPhone').textContent = ngoData.phone;
+                document.getElementById('dashboardNgoAddress').textContent = 
+                    `${ngoData.address}, ${ngoData.city}, ${ngoData.state}, ${ngoData.zip}, ${ngoData.country}`;
+            }
+        }
+
+        // Contact form submission
+        function submitContact() {
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const phone = document.getElementById('contactPhone').value;
+            const message = document.getElementById('contactMessage').value;
+            
+            if (!name || !email || !phone || !message) {
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Please fill all required fields',
+                    icon: 'warning',
+                    confirmButtonColor: '#FF6B6B'
+                });
+                return;
+            }
+            
+            // Show loading state
+            Swal.fire({
+                title: 'Sending Message',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                Swal.fire({
+                    title: 'Message Sent!',
+                    text: 'We will get back to you soon.',
+                    icon: 'success',
+                    confirmButtonColor: '#FF6B6B'
+                }).then(() => {
+                    document.getElementById('contactForm').reset();
+                });
+            }, 1500);
+        }
+
+        // View report details
+        function viewReportDetails(reportId) {
+            Swal.fire({
+                title: 'Report Details',
+                html: `
+                    <div class="text-left">
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-600">Reported by:</p>
+                            <p class="font-semibold">Rahul Singh</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-600">Contact:</p>
+                            <p class="font-semibold">+91 98765-43210</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-600">Location:</p>
+                            <p class="font-semibold">Connaught Place, New Delhi</p>
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-600">Status:</p>
+                            <p class="font-semibold">Rescued</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Notes:</p>
+                            <p>Dog with injured paw, treated and now in recovery</p>
+                        </div>
+                    </div>
+                `,
+                imageUrl: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
+                imageAlt: 'Injured Animal',
+                confirmButtonText: 'Close',
+                confirmButtonColor: '#FF6B6B'
+            });
+        }
+
+        // Accept case
+        function acceptCase(caseId) {
+            Swal.fire({
+                title: 'Accept Rescue Request',
+                text: 'Are you sure you want to accept this rescue request?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Accept',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#FF6B6B'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Request Accepted!',
+                        text: 'You are now responsible for this rescue. Opening navigation...',
+                        icon: 'success',
+                        confirmButtonText: 'Navigate Now',
+                        confirmButtonColor: '#FF6B6B'
+                    }).then(() => {
+                        // Show directions modal with map
+                        showDirectionsModal();
+                    });
+                }
+            });
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkNGOLogin();
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
